@@ -1,0 +1,4 @@
+slack_bolt==1.21.2
+google-genai
+schedule==1.2.2
+python-dotenv==1.0.1

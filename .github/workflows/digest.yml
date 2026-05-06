@@ -1,0 +1,32 @@
+name: Paper Digest
+
+on:
+  schedule:
+    # cron 用 UTC 時間。台北 = UTC+8，所以台北 17:00 = UTC 09:00。
+    # 每週三、五、日 17:00 (Asia/Taipei)
+    # 五個欄位：分 時 日 月 週幾  (週幾: 0=Sun, 1=Mon, ..., 6=Sat)
+    - cron: '0 9 * * 3,5,0'
+  workflow_dispatch:  # 允許從 GH UI 手動觸發
+
+jobs:
+  summarize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - run: pip install -r requirements.txt
+
+      - run: python run_once.py
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TARGET_CHANNEL_ID: ${{ secrets.TARGET_CHANNEL_ID }}
+          DM_USER_ID: ${{ secrets.DM_USER_ID }}
+          GEMINI_MODEL: gemini-2.5-flash
+          HISTORY_LIMIT: '150'
