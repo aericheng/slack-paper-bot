@@ -29,6 +29,7 @@ GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 TARGET_CHANNEL_ID = os.environ["TARGET_CHANNEL_ID"]
 DM_USER_ID = os.environ["DM_USER_ID"]
 HISTORY_LIMIT = int(os.environ.get("HISTORY_LIMIT", "150"))
+HISTORY_LOOKBACK_HOURS = float(os.environ.get("HISTORY_LOOKBACK_HOURS", "0"))  # 0 = 不限時間，只用 LIMIT
 TEST_RUN_ON_START = os.environ.get("TEST_RUN_ON_START", "false").lower() == "true"
 
 app = App(token=SLACK_BOT_TOKEN)
@@ -112,8 +113,15 @@ def _is_human_message(msg: dict) -> bool:
 
 
 def fetch_channel_text(channel_id: str, limit: int) -> str:
-    """抓主訊息 + 各 thread 的 replies，組成單一文字。bot 自己貼的訊息會被過濾。"""
-    result = app.client.conversations_history(channel=channel_id, limit=limit)
+    """抓主訊息 + 各 thread 的 replies，組成單一文字。bot 自己貼的訊息會被過濾。
+    若設定 HISTORY_LOOKBACK_HOURS > 0，只抓該時間窗口內的訊息。"""
+    kwargs = {"channel": channel_id, "limit": limit}
+    if HISTORY_LOOKBACK_HOURS > 0:
+        oldest_ts = time.time() - HISTORY_LOOKBACK_HOURS * 3600
+        kwargs["oldest"] = f"{oldest_ts:.6f}"
+        log.info("時間窗口：抓取最近 %.0f 小時內的訊息 (oldest=%s)",
+                 HISTORY_LOOKBACK_HOURS, kwargs["oldest"])
+    result = app.client.conversations_history(**kwargs)
     lines: list[str] = []
     for msg in result.get("messages", []):
         if not _is_human_message(msg):

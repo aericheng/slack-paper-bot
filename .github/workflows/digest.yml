@@ -22,11 +22,24 @@ jobs:
 
       - run: pip install -r requirements.txt
 
-      - run: python run_once.py
+      - name: Run digest with day-aware lookback window
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TARGET_CHANNEL_ID: ${{ secrets.TARGET_CHANNEL_ID }}
           DM_USER_ID: ${{ secrets.DM_USER_ID }}
           GEMINI_MODEL: gemini-2.5-flash
-          HISTORY_LIMIT: '150'
+          HISTORY_LIMIT: '200'
+        run: |
+          # date -u +%u: 1=Mon ... 7=Sun
+          # cron 每週三/五/日 09:00 UTC，對應 DOW = 3 / 5 / 7
+          # 對應上一次觸發日：週三看回週日 (72h)、週五看回週三 (48h)、週日看回週五 (48h)
+          DOW=$(date -u +%u)
+          case "$DOW" in
+            3) HOURS=72 ;;
+            5) HOURS=48 ;;
+            7) HOURS=48 ;;
+            *) HOURS=72 ;;  # 手動 workflow_dispatch 在非排程日 → 給 72h
+          esac
+          echo "UTC DOW=$DOW → HISTORY_LOOKBACK_HOURS=$HOURS"
+          HISTORY_LOOKBACK_HOURS=$HOURS python run_once.py
