@@ -65,7 +65,7 @@ def _fetch_tweet_text(tweet_id: str, timeout: float = 5.0) -> str | None:
 def _fetch_arxiv_meta(arxiv_id: str, timeout: float = 8.0) -> str | None:
     """用 arxiv 官方 API 抓 title + abstract，讓 Gemini 有具體技術內容可寫。"""
     try:
-        url = f"http://export.arxiv.org/api/query?id_list={arxiv_id}"
+        url = f"https://export.arxiv.org/api/query?id_list={arxiv_id}"
         req = Request(url, headers={"User-Agent": "PaperSummarizerBot/1.0"})
         with urlopen(req, timeout=timeout) as resp:
             xml_text = resp.read().decode("utf-8")
@@ -164,7 +164,9 @@ def summarize_with_llm(chat_text: str) -> str:
 • *進步在哪*：跟既有方法（baseline 名稱要寫出來）相比，具體贏在哪 — 速度 / 品質 / 規模 / 場景適用性等。例：「比 LVSM 能外插到更遠視角，因為 diffusion-based 而非 regression」、「training 比 official 4x 快但 PSNR 持平」。沒有具體 baseline 對比就省略整欄，不要寫「暗示了顯著進步」這種廢話
 • *實驗室觀點*：原訊息或 thread 同學評論的大意（可引述具體句子）。沒有就省略整欄，不要硬編
 
-——
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 
 ==== 內容深度規則（這次重點）====
 - 預抓內容若有 abstract（`[arxiv ...]` 或 project page 詳細內容），*怎麼做* 跟 *進步在哪* 應該寫到具體技術點 — 拒絕「該方法採用先進的技術從輸入生成輸出」這種空殼句
@@ -173,9 +175,19 @@ def summarize_with_llm(chat_text: str) -> str:
 
 ==== 格式硬規則 ====
 1. Slack mrkdwn：`*單星號 bold*`，不用 `**雙星號**`，不用 `#`/`###` 標題
-2. 論文間用 `——` 分隔，分隔線前後各留一空行
+2. 論文之間用以下分隔（**前後各兩行空行**，分隔線本身要長）：
+
+```
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+```
+
 3. `📄 *標題*` 當 header
 4. bullet 用 `• ` 開頭（中黑點 + 半形空格）
+5. 每篇論文最後一行（最後一個欄位）後面要有空行，不要緊接著下一個分隔線
 
 ==== 處理規則 ====
 - 跳過：純閒聊、無連結也無預抓內容的純文字、Slack URL preview 殘留（例如「X (formerly Twitter)」、整段重複 unfurl）
