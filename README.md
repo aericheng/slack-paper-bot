@@ -1,6 +1,15 @@
 # Slack Paper Summarizer Bot
 
-實驗室 Slack 頻道論文週報 bot — 自動抓取每週的論文連結與討論，用 Gemini LLM 整理成結構化 digest，私訊（DM）給指定使用者。
+基於 **GitHub Actions cron + Google Gemini LLM** 的 Slack 論文週報 bot — 定時抓取指定頻道近 N 天的論文連結與 thread 討論，呼叫 LLM 生成結構化 digest，再透過 Slack DM 推送給指定接收者。原本為實驗室論文分享頻道設計，可調整 prompt 與排程套用到其他用途（例如 release notes、討論摘要等）。
+
+## 技術棧
+
+- **Language**：Python 3.11+
+- **Slack 整合**：[`slack_bolt`](https://github.com/slackapi/bolt-python) — Socket Mode（本機開發）/ Web API（生產）
+- **LLM**：Google Gemini 2.5 Flash via [`google-genai`](https://github.com/googleapis/python-genai) SDK，啟用 URL Context 自動抓取論文頁面
+- **URL 預抓**：arxiv 官方 API（abstract）+ [fxtwitter](https://github.com/FxEmbed/FxEmbed) 公開 API（X/Twitter 內文）
+- **排程**：GitHub Actions cron（生產） / [`schedule`](https://github.com/dbader/schedule)（本機備援）
+- **部署**：無伺服器，全部跑在 GitHub Actions runner（免費額度足夠）
 
 ## 功能
 
@@ -68,12 +77,16 @@ git push -u origin main
 
 #### 2. 設定 GitHub Secrets
 
-在 repo → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**，新增 4 個 secret：
+在 repo → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**，新增以下 4 個 **必填** secret（值的格式與取得方式見上方[環境變數](#環境變數)表）：
 
-- `SLACK_BOT_TOKEN`
-- `GEMINI_API_KEY`
-- `TARGET_CHANNEL_ID`
-- `DM_USER_ID`
+| Secret 名稱 | 範例格式 | 取得來源 |
+|------------|---------|---------|
+| `SLACK_BOT_TOKEN` | `xoxb-...` | Slack App → OAuth & Permissions |
+| `GEMINI_API_KEY` | `AIza...` | https://aistudio.google.com/apikey |
+| `TARGET_CHANNEL_ID` | `C0XXXXXXX` | Slack 頻道右鍵 → 複製連結，網址尾段 |
+| `DM_USER_ID` | `U0XXXXXXX` | Slack 個人檔案 → 複製成員 ID |
+
+> `SLACK_APP_TOKEN`（`xapp-` 開頭）只有本機 Socket Mode 需要，**GitHub Actions 不需要設定**。
 
 #### 3. 確認 workflow
 
@@ -215,11 +228,3 @@ slack_bot/
 │   └── digest.yml                GH Actions cron + 動態 lookback
 └── README.md
 ```
-
-## 技術棧
-
-- **Slack SDK**: `slack_bolt` 1.21.2 (Socket Mode)
-- **LLM**: Google Gemini 2.5 Flash via `google-genai` SDK
-- **URL 預抓**: arxiv 官方 API + fxtwitter 社群 API
-- **排程**: GitHub Actions cron + `schedule` (本機備援)
-- **Python**: 3.11+
