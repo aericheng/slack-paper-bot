@@ -69,7 +69,7 @@ git init
 git add .
 git commit -m "Initial commit"
 git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/slack-paper-bot.git
+git remote add origin https://github.com/aericheng/slack-paper-bot.git  # fork 者請改成你自己帳號下的 repo URL
 git push -u origin main
 ```
 
