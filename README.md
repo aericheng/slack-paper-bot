@@ -1,3 +1,5 @@
+> **Archived 2026-10-29**：GitHub Actions Paper Digest 自 2026-07 起 disabled_inactivity，功能已由 lab-slack-watch 取代。
+
 # Slack Paper Summarizer Bot
 
 基於 **GitHub Actions cron + Google Gemini LLM** 的 Slack 論文週報 bot — 定時抓取指定頻道近 N 天的論文連結與 thread 討論，呼叫 LLM 生成結構化 digest，再透過 Slack DM 推送給指定接收者。原本為實驗室論文分享頻道設計，可調整 prompt 與排程套用到其他用途（例如 release notes、討論摘要等）。
